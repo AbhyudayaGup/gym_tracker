@@ -6,6 +6,11 @@ import { AppShell } from "@/components/app-shell";
 export const metadata: Metadata = {
   title: "Gym Flow Tracker",
   description: "Mobile-first workout tracker with manual sync",
+  icons: {
+    icon: "/ag.svg",
+    shortcut: "/ag.svg",
+    apple: "/ag.svg",
+  },
 };
 
 export default function RootLayout({
