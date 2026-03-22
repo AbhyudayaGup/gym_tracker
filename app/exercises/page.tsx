@@ -246,12 +246,12 @@ export default function ExercisesPage() {
             {filteredExercises.map((exercise) => (
               <li key={exercise.id}>
                 <div
-                  className={`rounded-xl border p-1 transition ${selectedExerciseId === exercise.id ? "is-selected" : ""}`}
+                  className={`exercise-item rounded-xl border p-1 transition ${selectedExerciseId === exercise.id ? "is-selected" : ""}`}
                   style={{ borderColor: "var(--border)" }}
                 >
                   <div className="flex items-start gap-2">
                     <button type="button" className="flex-1 rounded-lg p-2 text-left" onClick={() => setSelectedExerciseId(exercise.id)}>
-                      <p className="font-semibold">{exercise.name}</p>
+                      <p className="exercise-name font-semibold">{exercise.name}</p>
                       <p className="text-xs" style={{ color: "var(--muted)" }}>
                         {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
                       </p>
@@ -259,7 +259,7 @@ export default function ExercisesPage() {
                     <button
                       type="button"
                       aria-label={`Delete ${exercise.name}`}
-                      className="btn-secondary px-3 py-2"
+                      className="btn-secondary danger-btn px-3 py-2"
                       onClick={() => deleteExercise(exercise.id)}
                     >
                       <Trash2 size={14} />

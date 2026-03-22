@@ -18,6 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [routeColorShift, setRouteColorShift] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 18);
@@ -26,8 +27,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const handleNavTransition = () => {
+    setRouteColorShift(true);
+    window.setTimeout(() => setRouteColorShift(false), 650);
+  };
+
   return (
     <div className="mx-auto min-h-screen w-full max-w-4xl px-4 pb-24 pt-4 sm:px-6">
+      <div className={`route-color-wash ${routeColorShift ? "active" : ""}`} aria-hidden="true" />
       <header className="card fade-up mb-4 flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-2">
           <button
@@ -58,7 +65,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Link
                     href={href}
                     className="drawer-link"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      handleNavTransition();
+                    }}
                     style={active ? { background: "linear-gradient(120deg,var(--accent),var(--accent-2))", color: "white" } : undefined}
                   >
                     <Icon size={16} />
@@ -88,7 +98,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <li key={href}>
                 <Link
                   href={href}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    handleNavTransition();
+                  }}
                   className={clsx(
                     "nav-link flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-xs font-medium",
                     active ? "text-white" : "",

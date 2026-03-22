@@ -127,6 +127,8 @@ textarea {
 .btn-secondary:hover {
   transform: translateY(-1px);
   background: color-mix(in oklab, var(--card) 84%, var(--accent) 16%);
+  border-color: color-mix(in oklab, var(--accent) 68%, var(--border));
+  box-shadow: 0 10px 18px -14px color-mix(in oklab, var(--accent-2) 55%, black 45%);
 }
 
 .menu-icon-wrap {
@@ -197,8 +199,58 @@ textarea {
 }
 
 .nav-link:hover {
-  transform: translateY(-1px);
-  filter: saturate(1.1);
+  transform: translateY(-2px) scale(1.03);
+  filter: saturate(1.22);
+  background: color-mix(in oklab, var(--card) 78%, var(--accent) 22%);
+}
+
+.exercise-item {
+  background: color-mix(in oklab, var(--card) 94%, white 6%);
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
+}
+
+.exercise-item:hover {
+  transform: translateY(-2px) scale(1.01);
+  border-color: color-mix(in oklab, var(--accent-2) 70%, var(--border)) !important;
+  background: linear-gradient(
+    140deg,
+    color-mix(in oklab, var(--card) 72%, var(--accent) 28%),
+    color-mix(in oklab, var(--card) 80%, var(--accent-2) 20%)
+  );
+  box-shadow: 0 16px 26px -20px color-mix(in oklab, var(--accent) 85%, black 15%);
+}
+
+.exercise-name {
+  font-size: 1.02rem;
+  line-height: 1.35;
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.exercise-item:hover .exercise-name {
+  transform: translateX(2px);
+  color: color-mix(in oklab, var(--foreground) 70%, var(--accent) 30%);
+}
+
+.danger-btn:hover {
+  background: color-mix(in oklab, #f87171 30%, var(--card) 70%);
+  border-color: color-mix(in oklab, #ef4444 60%, var(--border));
+  color: #b91c1c;
+}
+
+.route-color-wash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 15% 20%, color-mix(in oklab, var(--accent) 68%, transparent), transparent 46%),
+    radial-gradient(circle at 85% 18%, color-mix(in oklab, var(--accent-2) 65%, transparent), transparent 44%),
+    radial-gradient(circle at 48% 88%, color-mix(in oklab, var(--accent-3) 54%, transparent), transparent 48%);
+}
+
+.route-color-wash.active {
+  animation: routeWash 680ms ease forwards;
 }
 
 .field {
@@ -279,5 +331,19 @@ textarea {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes routeWash {
+  0% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 0.28;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
   }
 }
