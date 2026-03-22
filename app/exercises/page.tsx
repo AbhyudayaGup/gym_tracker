@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { generateId } from "@/lib/ids";
 import { readSnapshot, withSnapshotUpdate } from "@/lib/local-store";
 import type { Exercise, MachineSpec } from "@/types/workout";
@@ -14,15 +14,68 @@ const initialMachine: MachineSpec = {
   notes: "",
 };
 
+const popularExercises = [
+  { name: "Barbell Bench Press", machineName: "Flat Bench + Barbell" },
+  { name: "Incline Dumbbell Press", machineName: "Adjustable Bench" },
+  { name: "Machine Chest Press", machineName: "Chest Press Machine" },
+  { name: "Pec Deck Fly", machineName: "Pec Deck" },
+  { name: "Lat Pulldown", machineName: "Cable Lat Pulldown" },
+  { name: "Seated Cable Row", machineName: "Cable Row Machine" },
+  { name: "Chest-Supported Row", machineName: "Chest-Supported Row Machine" },
+  { name: "Assisted Pull-Up", machineName: "Assisted Pull-Up Machine" },
+  { name: "Barbell Back Squat", machineName: "Squat Rack" },
+  { name: "Leg Press", machineName: "45° Leg Press" },
+  { name: "Hack Squat", machineName: "Hack Squat Machine" },
+  { name: "Walking Lunge", machineName: "Open Floor / Dumbbells" },
+  { name: "Romanian Deadlift", machineName: "Barbell" },
+  { name: "Leg Extension", machineName: "Leg Extension Machine" },
+  { name: "Seated Leg Curl", machineName: "Leg Curl Machine" },
+  { name: "Hip Thrust", machineName: "Bench + Barbell" },
+  { name: "Standing Calf Raise", machineName: "Calf Raise Machine" },
+  { name: "Seated Calf Raise", machineName: "Seated Calf Machine" },
+  { name: "Overhead Press", machineName: "Barbell / Rack" },
+  { name: "Machine Shoulder Press", machineName: "Shoulder Press Machine" },
+  { name: "Dumbbell Lateral Raise", machineName: "Dumbbells" },
+  { name: "Cable Face Pull", machineName: "Cable Station" },
+  { name: "Barbell Curl", machineName: "Barbell" },
+  { name: "Preacher Curl", machineName: "Preacher Bench / EZ Bar" },
+  { name: "Hammer Curl", machineName: "Dumbbells" },
+  { name: "Triceps Pushdown", machineName: "Cable Station" },
+  { name: "Overhead Triceps Extension", machineName: "Cable / Dumbbell" },
+  { name: "Cable Crunch", machineName: "Cable Station" },
+  { name: "Hanging Knee Raise", machineName: "Captain's Chair" },
+  { name: "Plank", machineName: "Mat" },
+];
+
+const normalize = (value: string) => value.trim().toLowerCase();
+
 export default function ExercisesPage() {
   const [snapshot, setSnapshot] = useState(() => readSnapshot());
   const [name, setName] = useState("");
   const [machine, setMachine] = useState<MachineSpec>(initialMachine);
+  const [selectedExerciseId, setSelectedExerciseId] = useState("");
 
   const sortedExercises = useMemo(
     () => snapshot.exercises.slice().sort((a, b) => a.name.localeCompare(b.name)),
     [snapshot.exercises],
   );
+
+  const selectedExercise = sortedExercises.find((exercise) => exercise.id === selectedExerciseId) ?? null;
+
+  const selectedExerciseLogs = useMemo(() => {
+    if (!selectedExerciseId) {
+      return [];
+    }
+    return snapshot.logs
+      .filter((log) => log.exerciseId === selectedExerciseId)
+      .slice()
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [selectedExerciseId, snapshot.logs]);
+
+  const missingPopularExercises = useMemo(() => {
+    const existingNames = new Set(snapshot.exercises.map((exercise) => normalize(exercise.name)));
+    return popularExercises.filter((exercise) => !existingNames.has(normalize(exercise.name)));
+  }, [snapshot.exercises]);
 
   const addExercise = () => {
     if (!name.trim() || !machine.machineName.trim()) {
@@ -45,13 +98,78 @@ export default function ExercisesPage() {
     }));
 
     setSnapshot(updated);
+    setSelectedExerciseId(exercise.id);
     setName("");
     setMachine(initialMachine);
   };
 
+  const addPopularExercise = (exerciseItem: (typeof popularExercises)[number]) => {
+    const updated = withSnapshotUpdate((current) => {
+      const exists = current.exercises.some((exercise) => normalize(exercise.name) === normalize(exerciseItem.name));
+      if (exists) {
+        return current;
+      }
+
+      const nextExercise: Exercise = {
+        id: generateId(),
+        name: exerciseItem.name,
+        machine: {
+          machineName: exerciseItem.machineName,
+          seatHeight: "",
+          angle: "",
+          loadUnit: "kg",
+          notes: "",
+        },
+        createdAt: new Date().toISOString(),
+      };
+
+      return {
+        ...current,
+        exercises: [...current.exercises, nextExercise],
+      };
+    });
+
+    setSnapshot(updated);
+    const added = updated.exercises.find((exercise) => normalize(exercise.name) === normalize(exerciseItem.name));
+    if (added) {
+      setSelectedExerciseId(added.id);
+    }
+  };
+
+  const addAllPopularExercises = () => {
+    if (missingPopularExercises.length === 0) {
+      return;
+    }
+
+    const updated = withSnapshotUpdate((current) => {
+      const existingNames = new Set(current.exercises.map((exercise) => normalize(exercise.name)));
+      const toAdd = missingPopularExercises
+        .filter((exercise) => !existingNames.has(normalize(exercise.name)))
+        .map((exercise) => ({
+          id: generateId(),
+          name: exercise.name,
+          machine: {
+            machineName: exercise.machineName,
+            seatHeight: "",
+            angle: "",
+            loadUnit: "kg" as const,
+            notes: "",
+          },
+          createdAt: new Date().toISOString(),
+        }));
+
+      return {
+        ...current,
+        exercises: [...current.exercises, ...toAdd],
+      };
+    });
+
+    setSnapshot(updated);
+  };
+
   return (
     <div className="space-y-4 pb-3">
-      <section className="card p-4">
+      <section className="card fade-up p-4">
         <h2 className="mb-3 text-lg font-bold">Add Exercise</h2>
         <div className="space-y-2">
           <input className="field" placeholder="Exercise name" value={name} onChange={(event) => setName(event.target.value)} />
@@ -104,8 +222,14 @@ export default function ExercisesPage() {
         </div>
       </section>
 
-      <section className="card p-4">
-        <h3 className="mb-3 text-base font-semibold">Saved Exercises</h3>
+      <section className="card fade-up stagger-1 p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="text-base font-semibold">Saved Exercises</h3>
+          <button type="button" className="btn-secondary inline-flex items-center gap-2 px-3 py-2 text-sm" onClick={addAllPopularExercises}>
+            <Sparkles size={14} />
+            Add all popular
+          </button>
+        </div>
         {sortedExercises.length === 0 ? (
           <p className="text-sm" style={{ color: "var(--muted)" }}>
             No exercises yet.
@@ -113,14 +237,76 @@ export default function ExercisesPage() {
         ) : (
           <ul className="space-y-2">
             {sortedExercises.map((exercise) => (
-              <li key={exercise.id} className="rounded-xl border p-3" style={{ borderColor: "var(--border)" }}>
-                <p className="font-semibold">{exercise.name}</p>
-                <p className="text-xs" style={{ color: "var(--muted)" }}>
-                  {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
-                </p>
+              <li key={exercise.id}>
+                <button
+                  type="button"
+                  className={`w-full rounded-xl border p-3 text-left transition ${selectedExerciseId === exercise.id ? "is-selected" : ""}`}
+                  style={{ borderColor: "var(--border)" }}
+                  onClick={() => setSelectedExerciseId(exercise.id)}
+                >
+                  <p className="font-semibold">{exercise.name}</p>
+                  <p className="text-xs" style={{ color: "var(--muted)" }}>
+                    {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
+                  </p>
+                </button>
               </li>
             ))}
           </ul>
+        )}
+
+        <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+          <h4 className="mb-2 text-sm font-semibold">Popular Common Exercises (30)</h4>
+          {missingPopularExercises.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
+              All popular exercises are already in your saved list.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {missingPopularExercises.map((exercise) => (
+                <button
+                  type="button"
+                  key={exercise.name}
+                  className="btn-secondary flex items-center justify-between gap-3 text-left"
+                  onClick={() => addPopularExercise(exercise)}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">{exercise.name}</span>
+                    <span className="block truncate text-xs" style={{ color: "var(--muted)" }}>
+                      {exercise.machineName}
+                    </span>
+                  </span>
+                  <Plus size={14} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="card fade-up stagger-2 p-4">
+        <h3 className="mb-3 text-base font-semibold">Exercise History</h3>
+        {!selectedExercise ? (
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            Tap any saved exercise to see every workout you have logged for it.
+          </p>
+        ) : selectedExerciseLogs.length === 0 ? (
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            No workouts logged yet for <span className="font-semibold">{selectedExercise.name}</span>.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">
+              {selectedExercise.name} • {selectedExerciseLogs.length} session{selectedExerciseLogs.length > 1 ? "s" : ""}
+            </p>
+            {selectedExerciseLogs.map((log) => (
+              <article key={log.id} className="rounded-xl border p-3" style={{ borderColor: "var(--border)" }}>
+                <p className="text-sm font-semibold">{log.date}</p>
+                <p className="text-xs" style={{ color: "var(--muted)" }}>
+                  Sets: {log.sets.map((set) => `${set.reps}${set.weight !== undefined ? `@${set.weight}` : ""}`).join(" • ")}
+                </p>
+              </article>
+            ))}
+          </div>
         )}
       </section>
     </div>

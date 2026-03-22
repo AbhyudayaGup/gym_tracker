@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-4xl px-4 pb-24 pt-4 sm:px-6">
-      <header className="card mb-4 flex items-center justify-between px-4 py-3">
+      <header className="card fade-up mb-4 flex items-center justify-between px-4 py-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em]" style={{ color: "var(--muted)" }}>
             Gym Flow
@@ -30,7 +30,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main>{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 mx-auto mb-3 w-[min(520px,calc(100%-1rem))] rounded-2xl border px-2 py-2 backdrop-blur card">
+      <nav
+        className="fixed inset-x-0 bottom-0 mx-auto mb-3 w-[min(520px,calc(100%-1rem))] rounded-2xl border px-2 py-2 backdrop-blur card"
+        style={{
+          background: "linear-gradient(150deg, color-mix(in oklab, var(--card) 90%, var(--accent) 10%), color-mix(in oklab, var(--card) 92%, var(--accent-3) 8%))",
+        }}
+      >
         <ul className="grid grid-cols-4 gap-1">
           {links.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;

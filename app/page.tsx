@@ -55,7 +55,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4 pb-3">
-      <section className="card p-4">
+      <section className="card fade-up p-4">
         <div className="mb-3 flex items-center justify-between">
           <div>
             <p className="text-sm" style={{ color: "var(--muted)" }}>
@@ -68,7 +68,7 @@ export default function HomePage() {
         <SyncButton onClick={handleSync} syncing={syncing} />
       </section>
 
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-3 gap-3 fade-up stagger-1">
         <article className="card p-3">
           <p className="text-xs" style={{ color: "var(--muted)" }}>
             Exercises
@@ -89,7 +89,7 @@ export default function HomePage() {
         </article>
       </section>
 
-      <section className="card p-4">
+      <section className="card fade-up stagger-2 p-4">
         <h3 className="mb-3 text-base font-semibold">Quick Actions</h3>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link href="/calendar" className="btn-secondary inline-flex items-center gap-2 justify-center">
@@ -103,7 +103,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="card p-4">
+      <section className="card fade-up stagger-3 p-4">
         <h3 className="mb-3 flex items-center gap-2 text-base font-semibold">
           <Activity size={16} />
           Recent Entries
