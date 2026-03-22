@@ -54,6 +54,7 @@ export default function ExercisesPage() {
   const [name, setName] = useState("");
   const [machine, setMachine] = useState<MachineSpec>(initialMachine);
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const sortedExercises = useMemo(
     () => snapshot.exercises.slice().sort((a, b) => a.name.localeCompare(b.name)),
@@ -61,6 +62,20 @@ export default function ExercisesPage() {
   );
 
   const selectedExercise = sortedExercises.find((exercise) => exercise.id === selectedExerciseId) ?? null;
+
+  const filteredExercises = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) {
+      return sortedExercises;
+    }
+
+    return sortedExercises.filter(
+      (exercise) =>
+        exercise.name.toLowerCase().includes(query) ||
+        exercise.machine.machineName.toLowerCase().includes(query) ||
+        (exercise.machine.notes ?? "").toLowerCase().includes(query),
+    );
+  }, [searchTerm, sortedExercises]);
 
   const selectedExerciseLogs = useMemo(() => {
     if (!selectedExerciseId) {
@@ -230,13 +245,23 @@ export default function ExercisesPage() {
             Add all popular
           </button>
         </div>
+        <input
+          className="field mb-3"
+          placeholder="Search saved exercises..."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
         {sortedExercises.length === 0 ? (
           <p className="text-sm" style={{ color: "var(--muted)" }}>
             No exercises yet.
           </p>
+        ) : filteredExercises.length === 0 ? (
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            No saved exercises match your search.
+          </p>
         ) : (
           <ul className="space-y-2">
-            {sortedExercises.map((exercise) => (
+            {filteredExercises.map((exercise) => (
               <li key={exercise.id}>
                 <button
                   type="button"
