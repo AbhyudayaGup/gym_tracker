@@ -1,10 +1,10 @@
 "use client";
 
 import { Moon, SunMedium } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useAppTheme } from "@/components/theme-provider";
 
 export function ThemeToggle() {
-  const { setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useAppTheme();
   const isDark = resolvedTheme === "dark";
 
   return (
