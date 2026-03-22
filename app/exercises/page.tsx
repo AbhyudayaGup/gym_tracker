@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { generateId } from "@/lib/ids";
 import { readSnapshot, withSnapshotUpdate, writeSnapshot } from "@/lib/local-store";
@@ -84,6 +84,7 @@ export default function ExercisesPage() {
   const [machine, setMachine] = useState<MachineSpec>(initialMachine);
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const historySectionRef = useRef<HTMLElement | null>(null);
 
   const sortedExercises = useMemo(
     () => snapshot.exercises.slice().sort((a, b) => a.name.localeCompare(b.name)),
@@ -163,6 +164,13 @@ export default function ExercisesPage() {
     if (selectedExerciseId === exerciseId) {
       setSelectedExerciseId(updated.exercises[0]?.id ?? "");
     }
+  };
+
+  const openExerciseHistory = (exerciseId: string) => {
+    setSelectedExerciseId(exerciseId);
+    window.setTimeout(() => {
+      historySectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 20);
   };
 
   return (
@@ -245,12 +253,9 @@ export default function ExercisesPage() {
           <ul className="space-y-2">
             {filteredExercises.map((exercise) => (
               <li key={exercise.id}>
-                <div
-                  className={`exercise-item rounded-xl border p-1 transition ${selectedExerciseId === exercise.id ? "is-selected" : ""}`}
-                  style={{ borderColor: "var(--border)" }}
-                >
+                <div className="exercise-item rounded-xl border p-1 transition" style={{ borderColor: "var(--border)" }}>
                   <div className="flex items-start gap-2">
-                    <button type="button" className="flex-1 rounded-lg p-2 text-left" onClick={() => setSelectedExerciseId(exercise.id)}>
+                    <button type="button" className="flex-1 rounded-lg p-2 text-left" onClick={() => openExerciseHistory(exercise.id)}>
                       <p className="exercise-name font-semibold">{exercise.name}</p>
                       <p className="text-xs" style={{ color: "var(--muted)" }}>
                         {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
@@ -272,7 +277,7 @@ export default function ExercisesPage() {
         )}
       </section>
 
-      <section className="card fade-up stagger-2 p-4">
+      <section ref={historySectionRef} className="card fade-up stagger-2 p-4">
         <h3 className="mb-3 text-base font-semibold">Exercise History</h3>
         {!selectedExercise ? (
           <p className="text-sm" style={{ color: "var(--muted)" }}>
