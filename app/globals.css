@@ -28,6 +28,14 @@
   box-sizing: border-box;
 }
 
+* {
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease;
+}
+
 html,
 body {
   margin: 0;
@@ -43,6 +51,7 @@ body {
 
 body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  transition: background 320ms ease, color 260ms ease;
 }
 
 a {
@@ -72,6 +81,12 @@ textarea {
 .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 24px 44px -30px color-mix(in oklab, var(--accent-2) 36%, black 64%);
+}
+
+.is-selected {
+  border-color: color-mix(in oklab, var(--accent) 66%, var(--border)) !important;
+  box-shadow: 0 12px 26px -20px color-mix(in oklab, var(--accent) 80%, black 20%);
+  background: color-mix(in oklab, var(--card) 84%, var(--accent) 16%);
 }
 
 .btn-primary {
@@ -112,6 +127,78 @@ textarea {
 .btn-secondary:hover {
   transform: translateY(-1px);
   background: color-mix(in oklab, var(--card) 84%, var(--accent) 16%);
+}
+
+.menu-icon-wrap {
+  display: inline-flex;
+  transition: transform 220ms ease;
+}
+
+.menu-icon-wrap.open {
+  transform: rotate(90deg) scale(1.05);
+}
+
+.mobile-drawer {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: max-height 280ms ease, opacity 220ms ease, transform 220ms ease;
+}
+
+.mobile-drawer.open {
+  max-height: 260px;
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 12px;
+}
+
+.drawer-link {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--muted);
+  font-weight: 600;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.drawer-link:hover {
+  transform: translateX(2px);
+  background: color-mix(in oklab, var(--card) 86%, var(--accent) 14%);
+}
+
+.page-transition {
+  animation: pageEnter 320ms ease both;
+}
+
+.liquid-nav {
+  border-color: color-mix(in oklab, var(--border) 75%, white 25%) !important;
+  background-clip: padding-box;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 55%, transparent),
+    0 16px 36px -24px color-mix(in oklab, var(--accent) 45%, black 55%);
+  backdrop-filter: blur(14px) saturate(1.2);
+  transform: translateY(0) scale(1);
+}
+
+.liquid-nav.is-scrolled {
+  backdrop-filter: blur(18px) saturate(1.35);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 70%, transparent),
+    0 24px 46px -28px color-mix(in oklab, var(--accent-2) 38%, black 62%);
+}
+
+.nav-link {
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.1);
 }
 
 .field {
@@ -181,5 +268,16 @@ textarea {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

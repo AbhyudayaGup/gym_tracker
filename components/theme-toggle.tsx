@@ -14,7 +14,7 @@ export function ThemeToggle() {
       className="btn-secondary inline-flex items-center gap-2"
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      {isDark ? <SunMedium size={16} /> : <Moon size={16} />}
+      <span className={`menu-icon-wrap ${isDark ? "open" : ""}`}>{isDark ? <SunMedium size={16} /> : <Moon size={16} />}</span>
       <span>{isDark ? "Light" : "Dark"}</span>
     </button>
   );

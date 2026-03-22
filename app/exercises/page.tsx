@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { generateId } from "@/lib/ids";
-import { readSnapshot, withSnapshotUpdate } from "@/lib/local-store";
+import { readSnapshot, withSnapshotUpdate, writeSnapshot } from "@/lib/local-store";
 import type { Exercise, MachineSpec } from "@/types/workout";
 
 const initialMachine: MachineSpec = {
@@ -50,7 +50,36 @@ const popularExercises = [
 const normalize = (value: string) => value.trim().toLowerCase();
 
 export default function ExercisesPage() {
-  const [snapshot, setSnapshot] = useState(() => readSnapshot());
+  const [snapshot, setSnapshot] = useState(() => {
+    const base = readSnapshot();
+    const existingNames = new Set(base.exercises.map((exercise) => normalize(exercise.name)));
+    const toAdd = popularExercises
+      .filter((exercise) => !existingNames.has(normalize(exercise.name)))
+      .map((exercise) => ({
+        id: generateId(),
+        name: exercise.name,
+        machine: {
+          machineName: exercise.machineName,
+          seatHeight: "",
+          angle: "",
+          loadUnit: "kg" as const,
+          notes: "",
+        },
+        createdAt: new Date().toISOString(),
+      }));
+
+    if (toAdd.length === 0) {
+      return base;
+    }
+
+    const next = {
+      ...base,
+      exercises: [...base.exercises, ...toAdd],
+      updatedAt: new Date().toISOString(),
+    };
+    writeSnapshot(next);
+    return next;
+  });
   const [name, setName] = useState("");
   const [machine, setMachine] = useState<MachineSpec>(initialMachine);
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
@@ -87,11 +116,6 @@ export default function ExercisesPage() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [selectedExerciseId, snapshot.logs]);
 
-  const missingPopularExercises = useMemo(() => {
-    const existingNames = new Set(snapshot.exercises.map((exercise) => normalize(exercise.name)));
-    return popularExercises.filter((exercise) => !existingNames.has(normalize(exercise.name)));
-  }, [snapshot.exercises]);
-
   const addExercise = () => {
     if (!name.trim() || !machine.machineName.trim()) {
       return;
@@ -118,68 +142,27 @@ export default function ExercisesPage() {
     setMachine(initialMachine);
   };
 
-  const addPopularExercise = (exerciseItem: (typeof popularExercises)[number]) => {
-    const updated = withSnapshotUpdate((current) => {
-      const exists = current.exercises.some((exercise) => normalize(exercise.name) === normalize(exerciseItem.name));
-      if (exists) {
-        return current;
-      }
-
-      const nextExercise: Exercise = {
-        id: generateId(),
-        name: exerciseItem.name,
-        machine: {
-          machineName: exerciseItem.machineName,
-          seatHeight: "",
-          angle: "",
-          loadUnit: "kg",
-          notes: "",
-        },
-        createdAt: new Date().toISOString(),
-      };
-
-      return {
-        ...current,
-        exercises: [...current.exercises, nextExercise],
-      };
-    });
-
-    setSnapshot(updated);
-    const added = updated.exercises.find((exercise) => normalize(exercise.name) === normalize(exerciseItem.name));
-    if (added) {
-      setSelectedExerciseId(added.id);
-    }
-  };
-
-  const addAllPopularExercises = () => {
-    if (missingPopularExercises.length === 0) {
+  const deleteExercise = (exerciseId: string) => {
+    const target = snapshot.exercises.find((exercise) => exercise.id === exerciseId);
+    if (!target) {
       return;
     }
 
-    const updated = withSnapshotUpdate((current) => {
-      const existingNames = new Set(current.exercises.map((exercise) => normalize(exercise.name)));
-      const toAdd = missingPopularExercises
-        .filter((exercise) => !existingNames.has(normalize(exercise.name)))
-        .map((exercise) => ({
-          id: generateId(),
-          name: exercise.name,
-          machine: {
-            machineName: exercise.machineName,
-            seatHeight: "",
-            angle: "",
-            loadUnit: "kg" as const,
-            notes: "",
-          },
-          createdAt: new Date().toISOString(),
-        }));
+    const shouldDelete = window.confirm(`Delete ${target.name}? Related workout logs for this exercise will also be removed.`);
+    if (!shouldDelete) {
+      return;
+    }
 
-      return {
-        ...current,
-        exercises: [...current.exercises, ...toAdd],
-      };
-    });
+    const updated = withSnapshotUpdate((current) => ({
+      ...current,
+      exercises: current.exercises.filter((exercise) => exercise.id !== exerciseId),
+      logs: current.logs.filter((log) => log.exerciseId !== exerciseId),
+    }));
 
     setSnapshot(updated);
+    if (selectedExerciseId === exerciseId) {
+      setSelectedExerciseId(updated.exercises[0]?.id ?? "");
+    }
   };
 
   return (
@@ -240,10 +223,9 @@ export default function ExercisesPage() {
       <section className="card fade-up stagger-1 p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-base font-semibold">Saved Exercises</h3>
-          <button type="button" className="btn-secondary inline-flex items-center gap-2 px-3 py-2 text-sm" onClick={addAllPopularExercises}>
-            <Sparkles size={14} />
-            Add all popular
-          </button>
+          <p className="text-xs" style={{ color: "var(--muted)" }}>
+            Includes popular common exercises
+          </p>
         </div>
         <input
           className="field mb-3"
@@ -263,49 +245,31 @@ export default function ExercisesPage() {
           <ul className="space-y-2">
             {filteredExercises.map((exercise) => (
               <li key={exercise.id}>
-                <button
-                  type="button"
-                  className={`w-full rounded-xl border p-3 text-left transition ${selectedExerciseId === exercise.id ? "is-selected" : ""}`}
+                <div
+                  className={`rounded-xl border p-1 transition ${selectedExerciseId === exercise.id ? "is-selected" : ""}`}
                   style={{ borderColor: "var(--border)" }}
-                  onClick={() => setSelectedExerciseId(exercise.id)}
                 >
-                  <p className="font-semibold">{exercise.name}</p>
-                  <p className="text-xs" style={{ color: "var(--muted)" }}>
-                    {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
-                  </p>
-                </button>
+                  <div className="flex items-start gap-2">
+                    <button type="button" className="flex-1 rounded-lg p-2 text-left" onClick={() => setSelectedExerciseId(exercise.id)}>
+                      <p className="font-semibold">{exercise.name}</p>
+                      <p className="text-xs" style={{ color: "var(--muted)" }}>
+                        {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Delete ${exercise.name}`}
+                      className="btn-secondary px-3 py-2"
+                      onClick={() => deleteExercise(exercise.id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
         )}
-
-        <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
-          <h4 className="mb-2 text-sm font-semibold">Popular Common Exercises (30)</h4>
-          {missingPopularExercises.length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--muted)" }}>
-              All popular exercises are already in your saved list.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {missingPopularExercises.map((exercise) => (
-                <button
-                  type="button"
-                  key={exercise.name}
-                  className="btn-secondary flex items-center justify-between gap-3 text-left"
-                  onClick={() => addPopularExercise(exercise)}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold">{exercise.name}</span>
-                    <span className="block truncate text-xs" style={{ color: "var(--muted)" }}>
-                      {exercise.machineName}
-                    </span>
-                  </span>
-                  <Plus size={14} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </section>
 
       <section className="card fade-up stagger-2 p-4">
