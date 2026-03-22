@@ -7,7 +7,6 @@ import { readSnapshot, withSnapshotUpdate, writeSnapshot } from "@/lib/local-sto
 import type { Exercise, MachineSpec } from "@/types/workout";
 
 const initialMachine: MachineSpec = {
-  machineName: "",
   seatHeight: "",
   angle: "",
   loadUnit: "kg",
@@ -15,36 +14,36 @@ const initialMachine: MachineSpec = {
 };
 
 const popularExercises = [
-  { name: "Barbell Bench Press", machineName: "Flat Bench + Barbell" },
-  { name: "Incline Dumbbell Press", machineName: "Adjustable Bench" },
-  { name: "Machine Chest Press", machineName: "Chest Press Machine" },
-  { name: "Pec Deck Fly", machineName: "Pec Deck" },
-  { name: "Lat Pulldown", machineName: "Cable Lat Pulldown" },
-  { name: "Seated Cable Row", machineName: "Cable Row Machine" },
-  { name: "Chest-Supported Row", machineName: "Chest-Supported Row Machine" },
-  { name: "Assisted Pull-Up", machineName: "Assisted Pull-Up Machine" },
-  { name: "Barbell Back Squat", machineName: "Squat Rack" },
-  { name: "Leg Press", machineName: "45° Leg Press" },
-  { name: "Hack Squat", machineName: "Hack Squat Machine" },
-  { name: "Walking Lunge", machineName: "Open Floor / Dumbbells" },
-  { name: "Romanian Deadlift", machineName: "Barbell" },
-  { name: "Leg Extension", machineName: "Leg Extension Machine" },
-  { name: "Seated Leg Curl", machineName: "Leg Curl Machine" },
-  { name: "Hip Thrust", machineName: "Bench + Barbell" },
-  { name: "Standing Calf Raise", machineName: "Calf Raise Machine" },
-  { name: "Seated Calf Raise", machineName: "Seated Calf Machine" },
-  { name: "Overhead Press", machineName: "Barbell / Rack" },
-  { name: "Machine Shoulder Press", machineName: "Shoulder Press Machine" },
-  { name: "Dumbbell Lateral Raise", machineName: "Dumbbells" },
-  { name: "Cable Face Pull", machineName: "Cable Station" },
-  { name: "Barbell Curl", machineName: "Barbell" },
-  { name: "Preacher Curl", machineName: "Preacher Bench / EZ Bar" },
-  { name: "Hammer Curl", machineName: "Dumbbells" },
-  { name: "Triceps Pushdown", machineName: "Cable Station" },
-  { name: "Overhead Triceps Extension", machineName: "Cable / Dumbbell" },
-  { name: "Cable Crunch", machineName: "Cable Station" },
-  { name: "Hanging Knee Raise", machineName: "Captain's Chair" },
-  { name: "Plank", machineName: "Mat" },
+  "Barbell Bench Press",
+  "Incline Dumbbell Press",
+  "Machine Chest Press",
+  "Pec Deck Fly",
+  "Lat Pulldown",
+  "Seated Cable Row",
+  "Chest-Supported Row",
+  "Assisted Pull-Up",
+  "Barbell Back Squat",
+  "Leg Press",
+  "Hack Squat",
+  "Walking Lunge",
+  "Romanian Deadlift",
+  "Leg Extension",
+  "Seated Leg Curl",
+  "Hip Thrust",
+  "Standing Calf Raise",
+  "Seated Calf Raise",
+  "Overhead Press",
+  "Machine Shoulder Press",
+  "Dumbbell Lateral Raise",
+  "Cable Face Pull",
+  "Barbell Curl",
+  "Preacher Curl",
+  "Hammer Curl",
+  "Triceps Pushdown",
+  "Overhead Triceps Extension",
+  "Cable Crunch",
+  "Hanging Knee Raise",
+  "Plank",
 ];
 
 const normalize = (value: string) => value.trim().toLowerCase();
@@ -54,12 +53,11 @@ export default function ExercisesPage() {
     const base = readSnapshot();
     const existingNames = new Set(base.exercises.map((exercise) => normalize(exercise.name)));
     const toAdd = popularExercises
-      .filter((exercise) => !existingNames.has(normalize(exercise.name)))
-      .map((exercise) => ({
+      .filter((exerciseName) => !existingNames.has(normalize(exerciseName)))
+      .map((exerciseName) => ({
         id: generateId(),
-        name: exercise.name,
+        name: exerciseName,
         machine: {
-          machineName: exercise.machineName,
           seatHeight: "",
           angle: "",
           loadUnit: "kg" as const,
@@ -102,7 +100,9 @@ export default function ExercisesPage() {
     return sortedExercises.filter(
       (exercise) =>
         exercise.name.toLowerCase().includes(query) ||
-        exercise.machine.machineName.toLowerCase().includes(query) ||
+        exercise.machine.seatHeight.toLowerCase().includes(query) ||
+        exercise.machine.angle.toLowerCase().includes(query) ||
+        exercise.machine.loadUnit.toLowerCase().includes(query) ||
         (exercise.machine.notes ?? "").toLowerCase().includes(query),
     );
   }, [searchTerm, sortedExercises]);
@@ -118,17 +118,14 @@ export default function ExercisesPage() {
   }, [selectedExerciseId, snapshot.logs]);
 
   const addExercise = () => {
-    if (!name.trim() || !machine.machineName.trim()) {
+    if (!name.trim()) {
       return;
     }
 
     const exercise: Exercise = {
       id: generateId(),
       name: name.trim(),
-      machine: {
-        ...machine,
-        machineName: machine.machineName.trim(),
-      },
+      machine: { ...machine },
       createdAt: new Date().toISOString(),
     };
 
@@ -179,12 +176,6 @@ export default function ExercisesPage() {
         <h2 className="mb-3 text-lg font-bold">Add Exercise</h2>
         <div className="space-y-2">
           <input className="field" placeholder="Exercise name" value={name} onChange={(event) => setName(event.target.value)} />
-          <input
-            className="field"
-            placeholder="Machine name"
-            value={machine.machineName}
-            onChange={(event) => setMachine((prev) => ({ ...prev, machineName: event.target.value }))}
-          />
           <div className="grid grid-cols-2 gap-2">
             <input
               className="field"
@@ -258,7 +249,7 @@ export default function ExercisesPage() {
                     <button type="button" className="flex-1 rounded-lg p-2 text-left" onClick={() => openExerciseHistory(exercise.id)}>
                       <p className="exercise-name font-semibold">{exercise.name}</p>
                       <p className="text-xs" style={{ color: "var(--muted)" }}>
-                        {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
+                        Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"} • {exercise.machine.loadUnit}
                       </p>
                     </button>
                     <button

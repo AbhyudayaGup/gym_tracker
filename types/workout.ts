@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const machineSpecSchema = z.object({
-  machineName: z.string().min(1),
   seatHeight: z.string().optional().default(""),
   angle: z.string().optional().default(""),
   loadUnit: z.enum(["kg", "lb", "plates"]).default("kg"),

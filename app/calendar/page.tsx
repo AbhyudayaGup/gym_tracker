@@ -175,7 +175,7 @@ export default function CalendarPage() {
                   </p>
                   {exercise?.machine && (
                     <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
-                      {exercise.machine.machineName} • Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"}
+                      Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"} • {exercise.machine.loadUnit}
                     </p>
                   )}
                 </article>
