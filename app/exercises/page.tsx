@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { generateId } from "@/lib/ids";
 import { readSnapshot, withSnapshotUpdate, writeSnapshot } from "@/lib/local-store";
 import { useMounted } from "@/lib/use-mounted";
@@ -84,6 +84,9 @@ export default function ExercisesPage() {
   const [machine, setMachine] = useState<MachineSpec>(initialMachine);
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingExerciseId, setEditingExerciseId] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editMachine, setEditMachine] = useState<MachineSpec>(initialMachine);
   const historySectionRef = useRef<HTMLElement | null>(null);
 
   const sortedExercises = useMemo(
@@ -184,6 +187,50 @@ export default function ExercisesPage() {
     }, 20);
   };
 
+  const startEditExercise = (exercise: Exercise) => {
+    setEditingExerciseId(exercise.id);
+    setEditName(exercise.name);
+    setEditMachine({
+      seatHeight: exercise.machine.seatHeight ?? "",
+      angle: exercise.machine.angle ?? "",
+      loadUnit: exercise.machine.loadUnit,
+      notes: exercise.machine.notes ?? "",
+    });
+  };
+
+  const cancelEditExercise = () => {
+    setEditingExerciseId("");
+    setEditName("");
+    setEditMachine(initialMachine);
+  };
+
+  const saveEditExercise = () => {
+    if (!editingExerciseId || !editName.trim()) {
+      return;
+    }
+
+    const updated = withSnapshotUpdate((current) => ({
+      ...current,
+      exercises: current.exercises.map((exercise) =>
+        exercise.id === editingExerciseId
+          ? {
+              ...exercise,
+              name: editName.trim(),
+              machine: {
+                seatHeight: editMachine.seatHeight,
+                angle: editMachine.angle,
+                loadUnit: editMachine.loadUnit,
+                notes: editMachine.notes,
+              },
+            }
+          : exercise,
+      ),
+    }));
+
+    setSnapshot(updated);
+    cancelEditExercise();
+  };
+
   return (
     <div className="space-y-4 pb-3">
       <section className="card fade-up p-4">
@@ -268,6 +315,14 @@ export default function ExercisesPage() {
                     </button>
                     <button
                       type="button"
+                      aria-label={`Edit ${exercise.name}`}
+                      className="btn-secondary px-3 py-2"
+                      onClick={() => startEditExercise(exercise)}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      type="button"
                       aria-label={`Delete ${exercise.name}`}
                       className="btn-secondary danger-btn px-3 py-2"
                       onClick={() => deleteExercise(exercise.id)}
@@ -275,6 +330,56 @@ export default function ExercisesPage() {
                       <Trash2 size={14} />
                     </button>
                   </div>
+
+                  {editingExerciseId === exercise.id && (
+                    <div className="mt-2 space-y-2 rounded-lg border p-2" style={{ borderColor: "var(--border)" }}>
+                      <input className="field" value={editName} onChange={(event) => setEditName(event.target.value)} placeholder="Exercise name" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          className="field"
+                          placeholder="Seat height"
+                          value={editMachine.seatHeight}
+                          onChange={(event) => setEditMachine((prev) => ({ ...prev, seatHeight: event.target.value }))}
+                        />
+                        <input
+                          className="field"
+                          placeholder="Angle"
+                          value={editMachine.angle}
+                          onChange={(event) => setEditMachine((prev) => ({ ...prev, angle: event.target.value }))}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          className="field"
+                          value={editMachine.loadUnit}
+                          onChange={(event) =>
+                            setEditMachine((prev) => ({
+                              ...prev,
+                              loadUnit: event.target.value as MachineSpec["loadUnit"],
+                            }))
+                          }
+                        >
+                          <option value="kg">kg</option>
+                          <option value="lb">lb</option>
+                          <option value="plates">plates</option>
+                        </select>
+                        <input
+                          className="field"
+                          placeholder="Machine notes"
+                          value={editMachine.notes}
+                          onChange={(event) => setEditMachine((prev) => ({ ...prev, notes: event.target.value }))}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" className="btn-primary" onClick={saveEditExercise}>
+                          Save
+                        </button>
+                        <button type="button" className="btn-secondary" onClick={cancelEditExercise}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </li>
             ))}
