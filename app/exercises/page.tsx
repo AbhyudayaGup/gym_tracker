@@ -47,30 +47,39 @@ const popularExercises = [
   "Plank",
 ];
 
-const normalize = (value: string) => value.trim().toLowerCase();
+const POPULAR_SEEDED_KEY = "gym-flow-popular-seeded";
 
 export default function ExercisesPage() {
   const mounted = useMounted();
   const [snapshot, setSnapshot] = useState(() => {
     const base = readSnapshot();
-    const existingNames = new Set(base.exercises.map((exercise) => normalize(exercise.name)));
-    const toAdd = popularExercises
-      .filter((exerciseName) => !existingNames.has(normalize(exerciseName)))
-      .map((exerciseName) => ({
-        id: generateId(),
-        name: exerciseName,
-        machine: {
-          seatHeight: "",
-          angle: "",
-          loadUnit: "kg" as const,
-          notes: "",
-        },
-        createdAt: new Date().toISOString(),
-      }));
-
-    if (toAdd.length === 0) {
+    if (typeof window === "undefined") {
       return base;
     }
+
+    const alreadySeeded = window.localStorage.getItem(POPULAR_SEEDED_KEY) === "1";
+    if (alreadySeeded) {
+      return base;
+    }
+
+    window.localStorage.setItem(POPULAR_SEEDED_KEY, "1");
+
+    const shouldSeedPopular = base.exercises.length === 0 && base.logs.length === 0;
+    if (!shouldSeedPopular) {
+      return base;
+    }
+
+    const toAdd = popularExercises.map((exerciseName) => ({
+      id: generateId(),
+      name: exerciseName,
+      machine: {
+        seatHeight: "",
+        angle: "",
+        loadUnit: "kg" as const,
+        notes: "",
+      },
+      createdAt: new Date().toISOString(),
+    }));
 
     const next = {
       ...base,
