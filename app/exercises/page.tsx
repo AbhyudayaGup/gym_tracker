@@ -121,6 +121,17 @@ export default function ExercisesPage() {
     );
   }, [searchTerm, sortedExercises]);
 
+  const exerciseNameSuggestions = useMemo(() => {
+    const names = new Set<string>();
+    for (const exerciseName of popularExercises) {
+      names.add(exerciseName);
+    }
+    for (const exercise of snapshot.exercises) {
+      names.add(exercise.name);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [snapshot.exercises]);
+
   const selectedExerciseLogs = useMemo(() => {
     if (!selectedExerciseId) {
       return [];
@@ -245,7 +256,18 @@ export default function ExercisesPage() {
       <section className="card fade-up p-4">
         <h2 className="mb-3 text-lg font-bold">Add Exercise</h2>
         <div className="space-y-2">
-          <input className="field" placeholder="Exercise name" value={name} onChange={(event) => setName(event.target.value)} />
+          <input
+            className="field"
+            placeholder="Exercise name (search while typing)"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            list="exercise-name-suggestions"
+          />
+          <datalist id="exercise-name-suggestions">
+            {exerciseNameSuggestions.map((exerciseName) => (
+              <option key={exerciseName} value={exerciseName} />
+            ))}
+          </datalist>
           <div className="grid grid-cols-2 gap-2">
             <input
               className="field"
