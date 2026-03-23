@@ -18,6 +18,9 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(() => dayjs().format("YYYY-MM-DD"));
   const [exerciseId, setExerciseId] = useState("");
   const [sets, setSets] = useState<SetEntry[]>([{ reps: 10 }]);
+  const [editingWorkoutId, setEditingWorkoutId] = useState("");
+  const [editExerciseId, setEditExerciseId] = useState("");
+  const [editSets, setEditSets] = useState<SetEntry[]>([{ reps: 10 }]);
 
   const logsByDate = useMemo(() => {
     const map = new Map<string, WorkoutEntry[]>();
@@ -86,6 +89,75 @@ export default function CalendarPage() {
 
     setSnapshot(updated);
     setSets([{ reps: 10 }]);
+  };
+
+  const deleteWorkout = (workoutId: string) => {
+    const target = snapshot.logs.find((log) => log.id === workoutId);
+    if (!target) {
+      return;
+    }
+
+    const shouldDelete = window.confirm("Delete this workout entry?");
+    if (!shouldDelete) {
+      return;
+    }
+
+    const updated = withSnapshotUpdate((current) => ({
+      ...current,
+      logs: current.logs.filter((log) => log.id !== workoutId),
+    }));
+
+    setSnapshot(updated);
+    if (editingWorkoutId === workoutId) {
+      setEditingWorkoutId("");
+    }
+  };
+
+  const startEditWorkout = (workoutId: string) => {
+    const target = snapshot.logs.find((log) => log.id === workoutId);
+    if (!target) {
+      return;
+    }
+
+    setEditingWorkoutId(workoutId);
+    setEditExerciseId(target.exerciseId);
+    setEditSets(target.sets.map((set) => ({ reps: set.reps, weight: set.weight })));
+  };
+
+  const cancelEditWorkout = () => {
+    setEditingWorkoutId("");
+    setEditExerciseId("");
+    setEditSets([{ reps: 10 }]);
+  };
+
+  const saveEditWorkout = () => {
+    if (!editingWorkoutId || !editExerciseId || editSets.length === 0) {
+      return;
+    }
+
+    const cleanSets = editSets
+      .filter((set) => set.reps > 0)
+      .map((set) => ({ reps: Number(set.reps), weight: set.weight !== undefined ? Number(set.weight) : undefined }));
+
+    if (cleanSets.length === 0) {
+      return;
+    }
+
+    const updated = withSnapshotUpdate((current) => ({
+      ...current,
+      logs: current.logs.map((log) =>
+        log.id === editingWorkoutId
+          ? {
+              ...log,
+              exerciseId: editExerciseId,
+              sets: cleanSets,
+            }
+          : log,
+      ),
+    }));
+
+    setSnapshot(updated);
+    cancelEditWorkout();
   };
 
   return (
@@ -191,6 +263,37 @@ export default function CalendarPage() {
                     <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
                       Seat {exercise.machine.seatHeight || "-"} • Angle {exercise.machine.angle || "-"} • {exercise.machine.loadUnit}
                     </p>
+                  )}
+
+                  <div className="mt-2 flex gap-2">
+                    <button type="button" className="btn-secondary px-3 py-1.5 text-sm" onClick={() => startEditWorkout(log.id)}>
+                      Edit
+                    </button>
+                    <button type="button" className="btn-secondary danger-btn px-3 py-1.5 text-sm" onClick={() => deleteWorkout(log.id)}>
+                      Delete
+                    </button>
+                  </div>
+
+                  {editingWorkoutId === log.id && (
+                    <div className="mt-2 space-y-2 rounded-xl border p-2" style={{ borderColor: "var(--border)" }}>
+                      <select className="field" value={editExerciseId} onChange={(event) => setEditExerciseId(event.target.value)}>
+                        <option value="">Choose exercise</option>
+                        {snapshot.exercises.map((exerciseOption) => (
+                          <option value={exerciseOption.id} key={exerciseOption.id}>
+                            {exerciseOption.name}
+                          </option>
+                        ))}
+                      </select>
+                      <SetEditor sets={editSets} onChange={setEditSets} />
+                      <div className="flex gap-2">
+                        <button type="button" className="btn-primary px-3 py-1.5 text-sm" onClick={saveEditWorkout}>
+                          Save
+                        </button>
+                        <button type="button" className="btn-secondary px-3 py-1.5 text-sm" onClick={cancelEditWorkout}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </article>
               );
