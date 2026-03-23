@@ -1,11 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Moon, SunMedium } from "lucide-react";
 import { useAppTheme } from "@/components/theme-provider";
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useAppTheme();
-  const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
     <button
@@ -15,7 +22,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       <span className={`menu-icon-wrap ${isDark ? "open" : ""}`}>{isDark ? <SunMedium size={16} /> : <Moon size={16} />}</span>
-      <span>{isDark ? "Light" : "Dark"}</span>
+      <span>{mounted ? (isDark ? "Light" : "Dark") : "Theme"}</span>
     </button>
   );
 }
