@@ -8,8 +8,10 @@ import { readSnapshot, writeSnapshot } from "@/lib/local-store";
 import { pullFromServer, pushToServer } from "@/lib/sync";
 import { StatusPill } from "@/components/status-pill";
 import { SyncButton } from "@/components/sync-button";
+import { useMounted } from "@/lib/use-mounted";
 
 export default function HomePage() {
+  const mounted = useMounted();
   const [snapshot, setSnapshot] = useState(() => readSnapshot());
   const [syncing, setSyncing] = useState(false);
   const [status, setStatus] = useState("Local changes ready");
@@ -23,6 +25,18 @@ export default function HomePage() {
       today: todayLogs.length,
     };
   }, [snapshot]);
+
+  if (!mounted) {
+    return (
+      <div className="space-y-4 pb-3">
+        <section className="card p-4">
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            Loading your workout data...
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   const handleSync = async () => {
     setSyncing(true);

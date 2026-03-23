@@ -10,6 +10,9 @@
   --accent-3: #2bc7b4;
   --ring: #ab91ff;
   --border: #ebdcc9;
+  --bg-spot-1: rgba(122, 77, 255, 0.26);
+  --bg-spot-2: rgba(255, 125, 107, 0.2);
+  --bg-spot-3: rgba(43, 199, 180, 0.18);
 }
 
 .dark {
@@ -22,6 +25,9 @@
   --accent-3: #52dbc9;
   --ring: #c5b6ff;
   --border: #332b5b;
+  --bg-spot-1: rgba(165, 137, 255, 0.32);
+  --bg-spot-2: rgba(255, 158, 122, 0.24);
+  --bg-spot-3: rgba(82, 219, 201, 0.2);
 }
 
 .dark[data-dark-scheme="amethyst"] {
@@ -34,6 +40,9 @@
   --accent-3: #52dbc9;
   --ring: #c5b6ff;
   --border: #332b5b;
+  --bg-spot-1: rgba(165, 137, 255, 0.36);
+  --bg-spot-2: rgba(255, 158, 122, 0.25);
+  --bg-spot-3: rgba(82, 219, 201, 0.2);
 }
 
 .dark[data-dark-scheme="ocean"] {
@@ -46,6 +55,9 @@
   --accent-3: #6cf0c2;
   --ring: #7bc2ff;
   --border: #28455f;
+  --bg-spot-1: rgba(73, 168, 255, 0.34);
+  --bg-spot-2: rgba(108, 231, 245, 0.28);
+  --bg-spot-3: rgba(76, 240, 194, 0.2);
 }
 
 .dark[data-dark-scheme="forest"] {
@@ -58,6 +70,9 @@
   --accent-3: #49c8b1;
   --ring: #6fe2b0;
   --border: #2d4b3e;
+  --bg-spot-1: rgba(57, 217, 138, 0.34);
+  --bg-spot-2: rgba(139, 229, 106, 0.26);
+  --bg-spot-3: rgba(73, 200, 177, 0.2);
 }
 
 .dark[data-dark-scheme="rose"] {
@@ -70,6 +85,9 @@
   --accent-3: #d285ff;
   --ring: #ff9ccc;
   --border: #56305b;
+  --bg-spot-1: rgba(255, 107, 177, 0.34);
+  --bg-spot-2: rgba(255, 141, 116, 0.28);
+  --bg-spot-3: rgba(210, 133, 255, 0.23);
 }
 
 .dark[data-dark-scheme="carbon"] {
@@ -82,6 +100,9 @@
   --accent-3: #7f8ca0;
   --ring: #c4cbd6;
   --border: #323942;
+  --bg-spot-1: rgba(156, 169, 186, 0.26);
+  --bg-spot-2: rgba(183, 194, 209, 0.2);
+  --bg-spot-3: rgba(127, 140, 160, 0.16);
 }
 
 * {
@@ -101,9 +122,9 @@ body {
   margin: 0;
   padding: 0;
   background:
-    radial-gradient(circle at 10% 10%, color-mix(in oklab, var(--accent) 24%, var(--background)), transparent 42%),
-    radial-gradient(circle at 88% 6%, color-mix(in oklab, var(--accent-2) 20%, var(--background)), transparent 40%),
-    radial-gradient(circle at 90% 90%, color-mix(in oklab, var(--accent-3) 16%, var(--background)), transparent 48%),
+    radial-gradient(circle at 10% 10%, var(--bg-spot-1), transparent 42%),
+    radial-gradient(circle at 88% 6%, var(--bg-spot-2), transparent 40%),
+    radial-gradient(circle at 90% 90%, var(--bg-spot-3), transparent 48%),
     var(--background);
   color: var(--foreground);
   min-height: 100%;

@@ -6,11 +6,13 @@ import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { SetEditor } from "@/components/set-editor";
 import { generateId } from "@/lib/ids";
 import { readSnapshot, withSnapshotUpdate } from "@/lib/local-store";
+import { useMounted } from "@/lib/use-mounted";
 import type { SetEntry, WorkoutEntry } from "@/types/workout";
 
 const weekLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function CalendarPage() {
+  const mounted = useMounted();
   const [snapshot, setSnapshot] = useState(() => readSnapshot());
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf("month"));
   const [selectedDate, setSelectedDate] = useState(() => dayjs().format("YYYY-MM-DD"));
@@ -43,6 +45,18 @@ export default function CalendarPage() {
     }
     return days;
   }, [currentMonth]);
+
+  if (!mounted) {
+    return (
+      <div className="space-y-4 pb-3">
+        <section className="card p-4">
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            Loading calendar...
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   const addLog = () => {
     if (!exerciseId || sets.length === 0) {

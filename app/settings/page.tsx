@@ -3,11 +3,25 @@
 import { useRef, useState } from "react";
 import { Download, Trash2, Upload } from "lucide-react";
 import { readSnapshot, writeSnapshot } from "@/lib/local-store";
+import { useMounted } from "@/lib/use-mounted";
 import { workoutSnapshotSchema } from "@/types/workout";
 
 export default function SettingsPage() {
+  const mounted = useMounted();
   const [message, setMessage] = useState("Manage your backup safely");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (!mounted) {
+    return (
+      <div className="space-y-4 pb-3">
+        <section className="card p-4">
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            Loading settings...
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   const handleExport = () => {
     const snapshot = readSnapshot();

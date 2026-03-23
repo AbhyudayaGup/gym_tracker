@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { generateId } from "@/lib/ids";
 import { readSnapshot, withSnapshotUpdate, writeSnapshot } from "@/lib/local-store";
+import { useMounted } from "@/lib/use-mounted";
 import type { Exercise, MachineSpec } from "@/types/workout";
 
 const initialMachine: MachineSpec = {
@@ -49,6 +50,7 @@ const popularExercises = [
 const normalize = (value: string) => value.trim().toLowerCase();
 
 export default function ExercisesPage() {
+  const mounted = useMounted();
   const [snapshot, setSnapshot] = useState(() => {
     const base = readSnapshot();
     const existingNames = new Set(base.exercises.map((exercise) => normalize(exercise.name)));
@@ -116,6 +118,18 @@ export default function ExercisesPage() {
       .slice()
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [selectedExerciseId, snapshot.logs]);
+
+  if (!mounted) {
+    return (
+      <div className="space-y-4 pb-3">
+        <section className="card p-4">
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            Loading exercises...
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   const addExercise = () => {
     if (!name.trim()) {
