@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Dumbbell, House, Menu, Settings, X } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import clsx from "clsx";
+
+const ThemeToggle = dynamic(() => import("@/components/theme-toggle").then((module) => module.ThemeToggle), {
+  ssr: false,
+});
 
 const links = [
   { href: "/", label: "Home", icon: House },

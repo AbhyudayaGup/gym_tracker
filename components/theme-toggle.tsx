@@ -1,46 +1,31 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import type { DarkScheme } from "@/components/theme-provider";
+import { Moon, SunMedium } from "lucide-react";
 import { useAppTheme } from "@/components/theme-provider";
 
 export function ThemeToggle() {
-  const { setTheme, setDarkScheme, resolvedTheme, darkScheme } = useAppTheme();
+  const { setTheme, resolvedTheme } = useAppTheme();
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   );
 
-  const selectedValue = mounted ? (resolvedTheme === "light" ? "light" : `dark-${darkScheme}`) : "light";
-
-  const handleChange = (value: string) => {
-    if (value === "light") {
-      setTheme("light");
-      return;
-    }
-
-    const nextScheme = value.replace("dark-", "") as DarkScheme;
-    setDarkScheme(nextScheme);
-    setTheme("dark");
-  };
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
-    <label className="theme-debug-wrap">
-      <span className="theme-debug-label">Theme Debug</span>
-      <select
-        aria-label="Theme debug selector"
-        className="theme-debug-select"
-        value={selectedValue}
-        onChange={(event) => handleChange(event.target.value)}
-      >
-        <option value="light">Light</option>
-        <option value="dark-amethyst">Dark · Amethyst</option>
-        <option value="dark-ocean">Dark · Ocean</option>
-        <option value="dark-forest">Dark · Forest</option>
-        <option value="dark-rose">Dark · Rose</option>
-        <option value="dark-carbon">Dark · Carbon</option>
-      </select>
-    </label>
+    <button
+      type="button"
+      aria-label="Toggle theme"
+      className="theme-slider"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+    >
+      <SunMedium size={14} className="theme-slider-icon" />
+      <span className={`theme-slider-track ${isDark ? "is-dark" : ""}`}>
+        <span className="theme-slider-thumb" />
+      </span>
+      <Moon size={14} className="theme-slider-icon" />
+    </button>
   );
 }
