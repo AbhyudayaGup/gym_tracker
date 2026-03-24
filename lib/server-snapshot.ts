@@ -11,6 +11,14 @@ const getToken = () => {
   return token;
 };
 
+const isBlobNotFoundError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const message = error.message.toLowerCase();
+  return message.includes("not found") || message.includes("blob") || message.includes("404");
+};
+
 export const readServerSnapshot = async (): Promise<WorkoutSnapshot | null> => {
   try {
     const metadata = await head(BLOB_PATH, {
@@ -23,9 +31,15 @@ export const readServerSnapshot = async (): Promise<WorkoutSnapshot | null> => {
 
     const json = await response.json();
     const parsed = workoutSnapshotSchema.safeParse(json);
-    return parsed.success ? parsed.data : null;
-  } catch {
-    return null;
+    if (!parsed.success) {
+      throw new Error("Stored snapshot is invalid");
+    }
+    return parsed.data;
+  } catch (error) {
+    if (isBlobNotFoundError(error)) {
+      return null;
+    }
+    throw error;
   }
 };
 

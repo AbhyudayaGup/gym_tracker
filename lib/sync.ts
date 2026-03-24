@@ -4,33 +4,48 @@ import { workoutSnapshotSchema, type WorkoutSnapshot } from "@/types/workout";
 
 export type SyncState = "idle" | "syncing" | "synced" | "error";
 
-export const pullFromServer = async (): Promise<WorkoutSnapshot | null> => {
+export type SyncResponse = {
+  snapshot: WorkoutSnapshot | null;
+  error: string | null;
+};
+
+export const pullFromServer = async (): Promise<SyncResponse> => {
   const response = await fetch("/api/sync/pull", { method: "GET" });
+
+  const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    return null;
+    return { snapshot: null, error: payload?.error ?? "Pull failed" };
   }
 
-  const payload = await response.json();
   if (!payload?.snapshot) {
-    return null;
+    return { snapshot: null, error: null };
   }
 
   const parsed = workoutSnapshotSchema.safeParse(payload.snapshot);
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) {
+    return { snapshot: null, error: "Server snapshot format is invalid" };
+  }
+
+  return { snapshot: parsed.data, error: null };
 };
 
-export const pushToServer = async (snapshot: WorkoutSnapshot): Promise<WorkoutSnapshot | null> => {
+export const pushToServer = async (snapshot: WorkoutSnapshot): Promise<SyncResponse> => {
   const response = await fetch("/api/sync/push", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ snapshot }),
   });
 
+  const payload = await response.json().catch(() => null);
+
   if (!response.ok) {
-    return null;
+    return { snapshot: null, error: payload?.error ?? "Push failed" };
   }
 
-  const payload = await response.json();
   const parsed = workoutSnapshotSchema.safeParse(payload.snapshot);
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) {
+    return { snapshot: null, error: "Server response snapshot format is invalid" };
+  }
+
+  return { snapshot: parsed.data, error: null };
 };

@@ -19,7 +19,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ snapshot: canonical });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to push snapshot" },
+      {
+        error:
+          error instanceof Error
+            ? `Failed to push snapshot: ${error.message}`
+            : "Failed to push snapshot",
+      },
       { status: 500 },
     );
   }

@@ -42,7 +42,14 @@ export default function HomePage() {
     setSyncing(true);
     setStatus("Sync in progress...");
 
-    const serverSnapshot = await pullFromServer();
+    const pullResult = await pullFromServer();
+    if (pullResult.error) {
+      setStatus(pullResult.error);
+      setSyncing(false);
+      return;
+    }
+
+    const serverSnapshot = pullResult.snapshot;
     let local = snapshot;
 
     if (serverSnapshot) {
@@ -56,10 +63,16 @@ export default function HomePage() {
       }
     }
 
-    const pushed = await pushToServer(local);
-    if (pushed) {
-      writeSnapshot(pushed);
-      setSnapshot(pushed);
+    const pushResult = await pushToServer(local);
+    if (pushResult.error) {
+      setStatus(pushResult.error);
+      setSyncing(false);
+      return;
+    }
+
+    if (pushResult.snapshot) {
+      writeSnapshot(pushResult.snapshot);
+      setSnapshot(pushResult.snapshot);
       setStatus("Synced successfully");
     } else {
       setStatus("Sync failed. Check token and network");
