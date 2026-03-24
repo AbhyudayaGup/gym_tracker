@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type DragEvent, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { SetEditor } from "@/components/set-editor";
@@ -21,6 +21,8 @@ export default function CalendarPage() {
   const [editingWorkoutId, setEditingWorkoutId] = useState("");
   const [editExerciseId, setEditExerciseId] = useState("");
   const [editSets, setEditSets] = useState<SetEntry[]>([{ reps: 10 }]);
+  const [draggingWorkoutId, setDraggingWorkoutId] = useState("");
+  const [dropTargetDate, setDropTargetDate] = useState("");
 
   const logsByDate = useMemo(() => {
     const map = new Map<string, WorkoutEntry[]>();
@@ -33,6 +35,11 @@ export default function CalendarPage() {
   }, [snapshot.logs]);
 
   const selectedDayLogs = logsByDate.get(selectedDate) ?? [];
+
+  const sortedExercises = useMemo(
+    () => snapshot.exercises.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [snapshot.exercises],
+  );
 
   const calendarDays = useMemo(() => {
     const monthStart = currentMonth.startOf("month");
@@ -160,6 +167,46 @@ export default function CalendarPage() {
     cancelEditWorkout();
   };
 
+  const moveWorkoutToDate = (workoutId: string, targetDate: string) => {
+    const target = snapshot.logs.find((log) => log.id === workoutId);
+    if (!target || target.date === targetDate) {
+      return;
+    }
+
+    const updated = withSnapshotUpdate((current) => ({
+      ...current,
+      logs: current.logs.map((log) => (log.id === workoutId ? { ...log, date: targetDate } : log)),
+    }));
+
+    setSnapshot(updated);
+    setSelectedDate(targetDate);
+
+    if (editingWorkoutId === workoutId) {
+      cancelEditWorkout();
+    }
+  };
+
+  const onWorkoutDragStart = (event: DragEvent<HTMLElement>, workoutId: string) => {
+    setDraggingWorkoutId(workoutId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", workoutId);
+  };
+
+  const onWorkoutDragEnd = () => {
+    setDraggingWorkoutId("");
+    setDropTargetDate("");
+  };
+
+  const onDayDrop = (event: DragEvent<HTMLButtonElement>, targetDate: string) => {
+    event.preventDefault();
+    const droppedWorkoutId = event.dataTransfer.getData("text/plain") || draggingWorkoutId;
+    if (droppedWorkoutId) {
+      moveWorkoutToDate(droppedWorkoutId, targetDate);
+    }
+    setDraggingWorkoutId("");
+    setDropTargetDate("");
+  };
+
   return (
     <div className="space-y-4 pb-3">
       <section className="card fade-up p-4">
@@ -170,7 +217,7 @@ export default function CalendarPage() {
           </div>
           <select className="field" value={exerciseId} onChange={(event) => setExerciseId(event.target.value)}>
             <option value="">Choose exercise</option>
-            {snapshot.exercises.map((exercise) => (
+            {sortedExercises.map((exercise) => (
               <option value={exercise.id} key={exercise.id}>
                 {exercise.name}
               </option>
@@ -223,13 +270,32 @@ export default function CalendarPage() {
               <button
                 type="button"
                 key={key}
-                className={`calendar-cell ${inMonth ? "" : "is-muted"} ${isSelected ? "is-selected" : ""} ${logs.length > 0 ? "has-log" : ""}`}
+                className={`calendar-cell ${inMonth ? "" : "is-muted"} ${isSelected ? "is-selected" : ""} ${logs.length > 0 ? "has-log" : ""} ${dropTargetDate === key && draggingWorkoutId ? "is-drop-target" : ""}`}
                 onClick={() => {
                   setSelectedDate(key);
                   if (day.month() !== currentMonth.month()) {
                     setCurrentMonth(day.startOf("month"));
                   }
                 }}
+                onDragOver={(event) => {
+                  if (!draggingWorkoutId) {
+                    return;
+                  }
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }}
+                onDragEnter={() => {
+                  if (!draggingWorkoutId) {
+                    return;
+                  }
+                  setDropTargetDate(key);
+                }}
+                onDragLeave={() => {
+                  if (dropTargetDate === key) {
+                    setDropTargetDate("");
+                  }
+                }}
+                onDrop={(event) => onDayDrop(event, key)}
               >
                 <p className="text-xs font-semibold">{day.date()}</p>
                 {logs.length > 0 && (
@@ -254,7 +320,14 @@ export default function CalendarPage() {
             {selectedDayLogs.map((log) => {
               const exercise = snapshot.exercises.find((item) => item.id === log.exerciseId);
               return (
-                <article key={log.id} className="rounded-xl border p-3" style={{ borderColor: "var(--border)" }}>
+                <article
+                  key={log.id}
+                  draggable
+                  onDragStart={(event) => onWorkoutDragStart(event, log.id)}
+                  onDragEnd={onWorkoutDragEnd}
+                  className={`workout-card rounded-xl border p-3 ${draggingWorkoutId === log.id ? "is-dragging" : ""}`}
+                  style={{ borderColor: "var(--border)" }}
+                >
                   <p className="font-semibold">{exercise?.name ?? "Unknown exercise"}</p>
                   <p className="text-xs" style={{ color: "var(--muted)" }}>
                     Sets: {log.sets.map((set) => `${set.reps}${set.weight !== undefined ? `@${set.weight}` : ""}`).join(" • ")}
@@ -278,7 +351,7 @@ export default function CalendarPage() {
                     <div className="mt-2 space-y-2 rounded-xl border p-2" style={{ borderColor: "var(--border)" }}>
                       <select className="field" value={editExerciseId} onChange={(event) => setEditExerciseId(event.target.value)}>
                         <option value="">Choose exercise</option>
-                        {snapshot.exercises.map((exerciseOption) => (
+                        {sortedExercises.map((exerciseOption) => (
                           <option value={exerciseOption.id} key={exerciseOption.id}>
                             {exerciseOption.name}
                           </option>
