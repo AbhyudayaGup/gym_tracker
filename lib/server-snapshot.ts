@@ -1,4 +1,4 @@
-import { del, head, put } from "@vercel/blob";
+import { BlobNotFoundError, del, get, put } from "@vercel/blob";
 import { createEmptySnapshot, workoutSnapshotSchema, type WorkoutSnapshot } from "@/types/workout";
 
 const BLOB_PATH = "gym-flow/workouts.json";
@@ -12,24 +12,22 @@ const getToken = () => {
 };
 
 const isBlobNotFoundError = (error: unknown) => {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-  const message = error.message.toLowerCase();
-  return message.includes("not found") || message.includes("blob") || message.includes("404");
+  return error instanceof BlobNotFoundError;
 };
 
 export const readServerSnapshot = async (): Promise<WorkoutSnapshot | null> => {
   try {
-    const metadata = await head(BLOB_PATH, {
+    const blobResult = await get(BLOB_PATH, {
+      access: "private",
+      useCache: false,
       token: getToken(),
     });
-    const response = await fetch(metadata.url, { cache: "no-store" });
-    if (!response.ok) {
+
+    if (!blobResult || !blobResult.stream) {
       return null;
     }
 
-    const json = await response.json();
+    const json = await new Response(blobResult.stream).json();
     const parsed = workoutSnapshotSchema.safeParse(json);
     if (!parsed.success) {
       throw new Error("Stored snapshot is invalid");
@@ -45,7 +43,7 @@ export const readServerSnapshot = async (): Promise<WorkoutSnapshot | null> => {
 
 export const writeServerSnapshot = async (snapshot: WorkoutSnapshot) => {
   await put(BLOB_PATH, JSON.stringify(snapshot), {
-    access: "public",
+    access: "private",
     token: getToken(),
     contentType: "application/json",
     addRandomSuffix: false,
