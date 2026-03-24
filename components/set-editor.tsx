@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Copy, Plus, Trash2 } from "lucide-react";
 import type { SetEntry } from "@/types/workout";
 
 type SetEditorProps = {
@@ -9,10 +9,21 @@ type SetEditorProps = {
 };
 
 export function SetEditor({ sets, onChange }: SetEditorProps) {
+  const duplicateSetAt = (index: number) => {
+    const target = sets[index];
+    if (!target) {
+      return;
+    }
+
+    const next = [...sets];
+    next.splice(index + 1, 0, { ...target });
+    onChange(next);
+  };
+
   return (
     <div className="space-y-2">
       {sets.map((set, index) => (
-        <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+        <div key={index} className="grid grid-cols-[1fr_1fr_auto_auto] gap-2">
           <input
             className="field"
             type="number"
@@ -38,6 +49,14 @@ export function SetEditor({ sets, onChange }: SetEditorProps) {
             }}
             placeholder="Weight"
           />
+          <button
+            type="button"
+            aria-label="Duplicate set"
+            className="btn-secondary px-3"
+            onClick={() => duplicateSetAt(index)}
+          >
+            <Copy size={16} />
+          </button>
           <button
             type="button"
             aria-label="Remove set"

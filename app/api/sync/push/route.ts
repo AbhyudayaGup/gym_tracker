@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveLastWriteWins, readServerSnapshot, writeServerSnapshot } from "@/lib/server-snapshot";
+import { resolvePreferredSnapshot, readServerSnapshot, writeServerSnapshot } from "@/lib/server-snapshot";
 import { workoutSnapshotSchema } from "@/types/workout";
 
 export async function POST(request: Request) {
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     const incoming = parsed.data;
     const server = await readServerSnapshot();
-    const canonical = resolveLastWriteWins(server, incoming);
+    const canonical = resolvePreferredSnapshot(server, incoming);
     await writeServerSnapshot(canonical);
 
     return NextResponse.json({ snapshot: canonical });

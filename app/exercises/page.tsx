@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { generateId } from "@/lib/ids";
-import { readSnapshot, withSnapshotUpdate, writeSnapshot } from "@/lib/local-store";
+import { readSnapshot, withSnapshotUpdate } from "@/lib/local-store";
 import { useMounted } from "@/lib/use-mounted";
 import type { Exercise, MachineSpec } from "@/types/workout";
 
@@ -47,48 +47,9 @@ const popularExercises = [
   "Plank",
 ];
 
-const POPULAR_SEEDED_KEY = "gym-flow-popular-seeded";
-
 export default function ExercisesPage() {
   const mounted = useMounted();
-  const [snapshot, setSnapshot] = useState(() => {
-    const base = readSnapshot();
-    if (typeof window === "undefined") {
-      return base;
-    }
-
-    const alreadySeeded = window.localStorage.getItem(POPULAR_SEEDED_KEY) === "1";
-    if (alreadySeeded) {
-      return base;
-    }
-
-    window.localStorage.setItem(POPULAR_SEEDED_KEY, "1");
-
-    const shouldSeedPopular = base.exercises.length === 0 && base.logs.length === 0;
-    if (!shouldSeedPopular) {
-      return base;
-    }
-
-    const toAdd = popularExercises.map((exerciseName) => ({
-      id: generateId(),
-      name: exerciseName,
-      machine: {
-        seatHeight: "",
-        angle: "",
-        loadUnit: "kg" as const,
-        notes: "",
-      },
-      createdAt: new Date().toISOString(),
-    }));
-
-    const next = {
-      ...base,
-      exercises: [...base.exercises, ...toAdd],
-      updatedAt: new Date().toISOString(),
-    };
-    writeSnapshot(next);
-    return next;
-  });
+  const [snapshot, setSnapshot] = useState(() => readSnapshot());
   const [name, setName] = useState("");
   const [machine, setMachine] = useState<MachineSpec>(initialMachine);
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
@@ -315,7 +276,7 @@ export default function ExercisesPage() {
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-base font-semibold">Saved Exercises</h3>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            Includes popular common exercises
+            Popular names are available as typing suggestions
           </p>
         </div>
         <input

@@ -5,6 +5,7 @@ import Link from "next/link";
 import dayjs from "dayjs";
 import { Activity, CalendarDays, Dumbbell } from "lucide-react";
 import { readSnapshot, writeSnapshot } from "@/lib/local-store";
+import { resolvePreferredSnapshot } from "@/lib/snapshot-merge";
 import { pullFromServer, pushToServer } from "@/lib/sync";
 import { StatusPill } from "@/components/status-pill";
 import { SyncButton } from "@/components/sync-button";
@@ -53,13 +54,12 @@ export default function HomePage() {
     let local = snapshot;
 
     if (serverSnapshot) {
-      const serverTime = new Date(serverSnapshot.updatedAt).getTime();
-      const localTime = new Date(snapshot.updatedAt).getTime();
-      if (serverTime > localTime) {
-        local = serverSnapshot;
-        writeSnapshot(serverSnapshot);
-        setSnapshot(serverSnapshot);
-        setStatus("Server had newer data, pulled latest");
+      const preferred = resolvePreferredSnapshot(snapshot, serverSnapshot);
+      if (preferred !== snapshot) {
+        local = preferred;
+        writeSnapshot(preferred);
+        setSnapshot(preferred);
+        setStatus("Pulled richer snapshot from server");
       }
     }
 

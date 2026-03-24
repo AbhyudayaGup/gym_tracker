@@ -1,5 +1,6 @@
 import { BlobNotFoundError, del, get, put } from "@vercel/blob";
 import { createEmptySnapshot, workoutSnapshotSchema, type WorkoutSnapshot } from "@/types/workout";
+import { resolvePreferredSnapshot } from "@/lib/snapshot-merge";
 
 const BLOB_PATH = "gym-flow/workouts.json";
 
@@ -59,25 +60,6 @@ export const resetServerSnapshot = async () => {
   }
 };
 
-export const resolveLastWriteWins = (
-  serverSnapshot: WorkoutSnapshot | null,
-  incomingSnapshot: WorkoutSnapshot,
-): WorkoutSnapshot => {
-  if (!serverSnapshot) {
-    return incomingSnapshot;
-  }
-
-  const serverTime = new Date(serverSnapshot.updatedAt).getTime();
-  const incomingTime = new Date(incomingSnapshot.updatedAt).getTime();
-
-  if (Number.isNaN(serverTime)) {
-    return incomingSnapshot;
-  }
-  if (Number.isNaN(incomingTime)) {
-    return serverSnapshot;
-  }
-
-  return incomingTime >= serverTime ? incomingSnapshot : serverSnapshot;
-};
+export { resolvePreferredSnapshot };
 
 export const emptyServerSnapshot = (deviceId: string) => createEmptySnapshot(deviceId);
